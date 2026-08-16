@@ -1,0 +1,30 @@
+# Data (keep folders tracked via .gitkeep, ignore contents)
+data/raw/*
+!data/raw/.gitkeep
+data/cleaned/*
+!data/cleaned/.gitkeep
+
+# Results (keep folder tracked via .gitkeep, ignore contents)
+results/*
+!results/.gitkeep
+
+# Python artifacts
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Model checkpoints
+*.pt
+*.ckpt
+checkpoints/
+
+# Experiment tracking
+wandb/
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+
+# OS files
+.DS_Store

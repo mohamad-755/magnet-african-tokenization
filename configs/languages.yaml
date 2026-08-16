@@ -1,0 +1,37 @@
+languages:
+  am:
+    name: Amharic
+    script: Geez
+    family: Afro-Asiatic
+  ha:
+    name: Hausa
+    script: Latin
+    family: Afro-Asiatic
+  ig:
+    name: Igbo
+    script: Latin
+    family: Niger-Congo (Volta-Niger)
+  ny:
+    name: Chichewa/Nyanja
+    script: Latin
+    family: Niger-Congo (Bantu)
+  rw:
+    name: Kinyarwanda
+    script: Latin
+    family: Niger-Congo (Bantu)
+  sw:
+    name: Swahili
+    script: Latin
+    family: Niger-Congo (Bantu)
+  wo:
+    name: Wolof
+    script: Latin
+    family: Niger-Congo (Atlantic)
+  yo:
+    name: Yoruba
+    script: Latin
+    family: Niger-Congo (Volta-Niger)
+  zu:
+    name: Zulu
+    script: Latin
+    family: Niger-Congo (Bantu)
