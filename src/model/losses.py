@@ -55,8 +55,8 @@ def binomial_regularizer(boundary_probs, target_rate, attention_mask=None, tau=1
         boundary_probs: (batch, seq_len) boundary probabilities (Eq. 1), as
             returned by [[hourglass_transformer.HourglassTransformer.forward]]
         target_rate: target compression rate beta — a python float, or a
-            tensor broadcastable to (batch,) for a per-script beta via
-            [[script_target_rates]]
+            tensor broadcastable to (batch,) for a per-script or
+            per-language beta via [[target_rates_by_id]]
         attention_mask: (batch, seq_len) bool, True at real (non-padded)
             positions
         tau: Gumbel-sigmoid temperature (Eq. 2)
@@ -83,19 +83,21 @@ def binomial_regularizer(boundary_probs, target_rate, attention_mask=None, tau=1
     return reg.mean()
 
 
-def script_target_rates(script_ids, beta_by_script):
+def target_rates_by_id(ids, beta_by_id):
     """
-    Expands a per-script target compression rate beta into a (batch,)
-    tensor aligned with a batch's script_ids, for use as `target_rate` in
-    [[binomial_regularizer]] when a [[magnet.MAGNET]] model routes through
-    multiple script-specific boundary predictors (Section 2.2).
+    Expands a target compression rate beta, indexed per-script or
+    per-language, into a (batch,) tensor aligned with a batch's routing
+    ids, for use as `target_rate` in [[binomial_regularizer]] when a
+    [[magnet.MAGNET]] model routes through multiple boundary predictors
+    (script-level per the paper's Section 2.2, or this project's own
+    finer-grained per-language variant — see [[magnet.LanguageRoutedBoundaryPredictor]]).
 
     Args:
-        script_ids: (batch,) long tensor of script indices
-        beta_by_script: sequence/tensor of target rates indexed by script id
+        ids: (batch,) long tensor of script or language indices
+        beta_by_id: sequence/tensor of target rates indexed by that id
     """
-    beta_by_script = torch.as_tensor(beta_by_script, dtype=torch.float32, device=script_ids.device)
-    return beta_by_script[script_ids]
+    beta_by_id = torch.as_tensor(beta_by_id, dtype=torch.float32, device=ids.device)
+    return beta_by_id[ids]
 
 
 def magnet_loss(logits, targets, boundary_probs, target_rate, reg_weight=1.0,

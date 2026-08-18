@@ -164,8 +164,8 @@ class HourglassTransformer(nn.Module):
             attention_mask: (batch, seq_len) bool, True at real (non-padded)
                 positions. Assumes right-padding.
             boundary_predictor_kwargs: extra kwargs forwarded to
-                self.boundary_predictor's forward (e.g. `script_ids` for
-                [[magnet.ScriptRoutedBoundaryPredictor]], per paper Section 2.2)
+                self.boundary_predictor's forward (e.g. `language_ids` for
+                [[magnet.LanguageRoutedBoundaryPredictor]])
 
         Returns:
             logits: (batch, seq_len, vocab_size)

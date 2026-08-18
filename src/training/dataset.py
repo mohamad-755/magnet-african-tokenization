@@ -1,15 +1,14 @@
 from pathlib import Path
 
 import torch
-import yaml
 from torch.utils.data import Dataset
 
 PAD_ID = 256
 VOCAB_SIZE = 257  # 256 raw byte values + 1 dedicated pad id
 
-SCRIPTS = ("Latin", "Geez")
-
-DEFAULT_LANGUAGES_YAML = Path(__file__).resolve().parents[2] / "configs" / "languages.yaml"
+# Canonical language order for LanguageRoutedBoundaryPredictor routing
+# (src/model/magnet.py) — index into this tuple is a language's id.
+LANGUAGES = ("sw", "zu", "yo", "ig", "ha", "ny", "am", "rw", "wo")
 
 # Per-language folder names under DATA_ROOT. Train and eval are split out
 # explicitly because Wolof's eval set was drawn from the Wikipedia-only
@@ -27,12 +26,6 @@ LANG_TO_FOLDER = {
     "yo": {"train": "yo_wikipedia", "eval": "yo_wikipedia"},
     "zu": {"train": "zu_wikipedia", "eval": "zu_wikipedia"},
 }
-
-
-def _load_script_by_lang(languages_yaml_path):
-    with open(languages_yaml_path, "r", encoding="utf-8") as f:
-        languages = yaml.safe_load(f)["languages"]
-    return {code: entry["script"] for code, entry in languages.items()}
 
 
 def _corpus_path(data_root, lang, split):
@@ -67,13 +60,12 @@ class MagnetByteDataset(Dataset):
     train/corpus.txt (or eval_holdout/<folder>/eval.txt for the eval
     split — already the correct held-out set per data_card.md, never
     re-split or re-shuffled here), converts text to raw UTF-8 bytes, tags
-    each resulting chunk with its language's script (configs/languages.yaml),
-    and chunks into fixed max_seq_len windows for
-    [[collate.collate_batch]] / [[magnet.MAGNET]].
+    each resulting chunk with its language code, and chunks into fixed
+    max_seq_len windows for [[collate.collate_batch]] / [[magnet.MAGNET]]'s
+    [[magnet.LanguageRoutedBoundaryPredictor]] routing.
     """
 
-    def __init__(self, data_root, lang_codes, split="train", max_seq_len=512,
-                 stride=None, languages_yaml_path=DEFAULT_LANGUAGES_YAML):
+    def __init__(self, data_root, lang_codes, split="train", max_seq_len=512, stride=None):
         if split not in ("train", "eval"):
             raise ValueError(f"split must be 'train' or 'eval', got {split!r}")
 
@@ -81,24 +73,20 @@ class MagnetByteDataset(Dataset):
         self.max_seq_len = max_seq_len
         self.stride = stride
 
-        script_by_lang = _load_script_by_lang(languages_yaml_path)
-
-        self.examples = []  # (byte_id_chunk: list[int], script: str, lang: str)
+        self.examples = []  # (byte_id_chunk: list[int], lang: str)
         for lang in lang_codes:
             corpus_path = _corpus_path(self.data_root, lang, split)
             text = corpus_path.read_text(encoding="utf-8")
             byte_ids = list(text.encode("utf-8"))
-            script = script_by_lang[lang]
             for chunk in _chunk_bytes(byte_ids, max_seq_len, stride):
-                self.examples.append((chunk, script, lang))
+                self.examples.append((chunk, lang))
 
     def __len__(self):
         return len(self.examples)
 
     def __getitem__(self, idx):
-        chunk, script, lang = self.examples[idx]
+        chunk, lang = self.examples[idx]
         return {
             "input_ids": torch.tensor(chunk, dtype=torch.long),
-            "script": script,
             "lang": lang,
         }

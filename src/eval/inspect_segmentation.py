@@ -25,15 +25,8 @@ from torch.utils.data import DataLoader
 from src.model.boundary_predictor import gumbel_sigmoid_boundaries
 from src.model.hourglass_transformer import _finalize_boundaries
 from src.model.magnet import MAGNET
-from src.training.collate import SCRIPT_TO_ID, collate_batch
-from src.training.dataset import (
-    DEFAULT_LANGUAGES_YAML,
-    SCRIPTS,
-    VOCAB_SIZE,
-    MagnetByteDataset,
-    _corpus_path,
-    _load_script_by_lang,
-)
+from src.training.collate import LANGUAGE_TO_ID, collate_batch
+from src.training.dataset import LANGUAGES, VOCAB_SIZE, MagnetByteDataset, _corpus_path
 
 DEFAULT_LANGUAGES = ("sw", "zu", "am")
 NUM_EXAMPLES = 5
@@ -56,7 +49,7 @@ def load_model(checkpoint_path, device):
     cfg = payload["config"]
     model = MAGNET(
         vocab_size=VOCAB_SIZE,
-        scripts=SCRIPTS,
+        languages=LANGUAGES,
         d_model=cfg["d_model"],
         n_heads=cfg["n_heads"],
         n_layers_tokenization=cfg["n_layers_tokenization"],
@@ -69,7 +62,7 @@ def load_model(checkpoint_path, device):
     return model, payload.get("step")
 
 
-def hard_boundaries_for(model, byte_ids, script_id, device):
+def hard_boundaries_for(model, byte_ids, language_id, device):
     """
     Reconstructs the exact hard boundary decisions the model used
     internally — [[src.model.hourglass_transformer.HourglassTransformer.forward]]
@@ -79,9 +72,9 @@ def hard_boundaries_for(model, byte_ids, script_id, device):
     finalization ([[_finalize_boundaries]]) the model applies before pooling.
     """
     input_ids = torch.tensor([byte_ids], dtype=torch.long, device=device)
-    script_ids = torch.tensor([script_id], dtype=torch.long, device=device)
+    language_ids = torch.tensor([language_id], dtype=torch.long, device=device)
     with torch.no_grad():
-        _, boundary_probs = model(input_ids, script_ids, attention_mask=None)
+        _, boundary_probs = model(input_ids, language_ids, attention_mask=None)
     hard = gumbel_sigmoid_boundaries(boundary_probs, training=False)
     hard = _finalize_boundaries(hard, attention_mask=None)
     return hard[0].tolist()
@@ -149,19 +142,19 @@ def read_example_lines(eval_txt_path, n, max_bytes):
     return lines
 
 
-def print_examples(model, data_root, lang, script_id, device, max_seq_len, n):
+def print_examples(model, data_root, lang, language_id, device, max_seq_len, n):
     eval_path = _corpus_path(data_root, lang, "eval")
     lines = read_example_lines(eval_path, n, max_seq_len)
     print(f"\n=== {lang}: {len(lines)} example sentence(s) ===")
     for byte_ids in lines:
-        hard = hard_boundaries_for(model, byte_ids, script_id, device)
+        hard = hard_boundaries_for(model, byte_ids, language_id, device)
         rendered, n_segments, mid_char_splits = render_segments(byte_ids, hard)
         mid_char_note = f", {mid_char_splits} mid-character" if mid_char_splits else ""
         print(f"  [{n_segments} segments{mid_char_note}, {len(byte_ids)} bytes] {rendered}")
 
 
 @torch.no_grad()
-def full_eval_stats(model, data_root, lang, script_id, device, max_seq_len, batch_size):
+def full_eval_stats(model, data_root, lang, language_id, device, max_seq_len, batch_size):
     """
     The actual equitability metric: average segments/example and average
     bytes/segment across a language's FULL eval_holdout set (not just the
@@ -176,9 +169,9 @@ def full_eval_stats(model, data_root, lang, script_id, device, max_seq_len, batc
     for batch in loader:
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
-        script_ids = torch.full((input_ids.size(0),), script_id, dtype=torch.long, device=device)
+        language_ids = torch.full((input_ids.size(0),), language_id, dtype=torch.long, device=device)
 
-        _, boundary_probs = model(input_ids, script_ids, attention_mask)
+        _, boundary_probs = model(input_ids, language_ids, attention_mask)
         hard = gumbel_sigmoid_boundaries(boundary_probs, training=False)
         hard = _finalize_boundaries(hard, attention_mask)
 
@@ -225,17 +218,13 @@ def main():
     model, step = load_model(args.checkpoint_path, device)
     print(f"loaded checkpoint at step {step} ({args.checkpoint_path}), device={device}")
 
-    script_by_lang = _load_script_by_lang(DEFAULT_LANGUAGES_YAML)
-
     for lang in languages:
-        script_id = SCRIPT_TO_ID[script_by_lang[lang]]
-        print_examples(model, args.data_root, lang, script_id, device, args.max_seq_len, args.num_examples)
+        print_examples(model, args.data_root, lang, LANGUAGE_TO_ID[lang], device, args.max_seq_len, args.num_examples)
 
     print("\n=== full eval_holdout segmentation stats (equitability check) ===")
     for lang in languages:
-        script_id = SCRIPT_TO_ID[script_by_lang[lang]]
         stats = full_eval_stats(
-            model, args.data_root, lang, script_id, device, args.max_seq_len, args.eval_batch_size
+            model, args.data_root, lang, LANGUAGE_TO_ID[lang], device, args.max_seq_len, args.eval_batch_size
         )
         print(
             f"  {lang}: n={stats['n_examples']} "

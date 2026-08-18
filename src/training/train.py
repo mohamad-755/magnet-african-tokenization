@@ -23,10 +23,10 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 
-from src.model.losses import magnet_loss, script_target_rates
+from src.model.losses import magnet_loss, target_rates_by_id
 from src.model.magnet import MAGNET
 from src.training.collate import collate_batch
-from src.training.dataset import SCRIPTS, VOCAB_SIZE, MagnetByteDataset
+from src.training.dataset import LANGUAGES, VOCAB_SIZE, MagnetByteDataset
 
 
 @dataclasses.dataclass
@@ -36,6 +36,9 @@ class TrainConfig:
     # First run: sw/zu/am gives a spread across script (Latin + Geez) and
     # morphology (Bantu, Bantu, Semitic) while avoiding the largest (ha)
     # and smallest (ny) corpora. Expand to all 9 by passing --languages.
+    # Independent of this: build_model always allocates all 9 of
+    # dataset.LANGUAGES' boundary predictors regardless of this subset —
+    # predictors for languages not trained on here just stay at init.
     languages: tuple = ("sw", "zu", "am")
     max_seq_len: int = 512
 
@@ -55,10 +58,12 @@ class TrainConfig:
     total_steps: int = 100_000
     grad_clip_norm: float = 1.0
 
-    # Binomial regularizer target compression rate beta, per script,
-    # index-aligned with SCRIPTS = ("Latin", "Geez"). Placeholder values —
-    # tune to the paper's actual per-script targets.
-    beta_by_script: tuple = (0.5, 0.5)
+    # Binomial regularizer target compression rate beta, per language,
+    # index-aligned with dataset.LANGUAGES (9 languages — this project's
+    # own finer-grained-than-script routing, see
+    # [[src.model.magnet.LanguageRoutedBoundaryPredictor]]). Placeholder
+    # values — tune per language (see src/eval/compute_beta.py).
+    beta_by_language: tuple = (0.5,) * len(LANGUAGES)
     reg_weight: float = 1.0
 
     # Logging / eval / checkpointing
@@ -95,7 +100,7 @@ class RoundRobinLanguageLoader:
     """
     Cycles through one DataLoader per language, yielding a single
     language-homogeneous batch per language in turn, so loss can be
-    attributed to one language/script per step (not just a batch-mixed
+    attributed to one language per step (not just a batch-mixed
     average) for [[train]]'s per-language logging.
     """
 
@@ -129,7 +134,7 @@ class RoundRobinLanguageLoader:
 def build_model(config):
     return MAGNET(
         vocab_size=VOCAB_SIZE,
-        scripts=SCRIPTS,
+        languages=LANGUAGES,
         d_model=config.d_model,
         n_heads=config.n_heads,
         n_layers_tokenization=config.n_layers_tokenization,
@@ -162,10 +167,10 @@ def build_scheduler(optimizer, config):
 def run_step(model, batch, config, device):
     input_ids = batch["input_ids"].to(device)
     attention_mask = batch["attention_mask"].to(device)
-    script_ids = batch["script_ids"].to(device)
+    language_ids = batch["language_ids"].to(device)
 
-    logits, boundary_probs = model(input_ids, script_ids, attention_mask)
-    beta = script_target_rates(script_ids, config.beta_by_script)
+    logits, boundary_probs = model(input_ids, language_ids, attention_mask)
+    beta = target_rates_by_id(language_ids, config.beta_by_language)
     loss, comps = magnet_loss(
         logits, input_ids, boundary_probs, beta,
         reg_weight=config.reg_weight, attention_mask=attention_mask,
@@ -299,11 +304,14 @@ def parse_args():
     parser.add_argument("--total-steps", type=int, default=defaults.total_steps)
     parser.add_argument("--grad-clip-norm", type=float, default=defaults.grad_clip_norm)
     parser.add_argument("--reg-weight", type=float, default=defaults.reg_weight)
-    # Comma-separated floats, index-aligned with SCRIPTS = ("Latin", "Geez"),
-    # e.g. --beta-by-script 0.5,0.3. Without this flag every script shares
-    # the same TrainConfig default target rate — see src/eval/compute_beta.py
-    # for computing a script's target from its paper Eq. 4 byte-to-word ratio.
-    parser.add_argument("--beta-by-script", type=str, default=",".join(str(b) for b in defaults.beta_by_script))
+    # Comma-separated floats, index-aligned with dataset.LANGUAGES (9
+    # values), e.g. --beta-by-language 0.16,0.16,...,0.08. Without this
+    # flag every language shares the same TrainConfig default target rate
+    # — see src/eval/compute_beta.py for computing a language's target
+    # from its paper Eq. 4 byte-to-word ratio.
+    parser.add_argument(
+        "--beta-by-language", type=str, default=",".join(str(b) for b in defaults.beta_by_language)
+    )
 
     parser.add_argument("--log-every", type=int, default=defaults.log_every)
     parser.add_argument("--eval-every", type=int, default=defaults.eval_every)
@@ -321,6 +329,13 @@ def parse_args():
     parser.add_argument("--device", type=str, default=defaults.device)
 
     args = parser.parse_args()
+    beta_by_language = tuple(float(b) for b in args.beta_by_language.split(","))
+    if len(beta_by_language) != len(LANGUAGES):
+        raise SystemExit(
+            f"--beta-by-language needs {len(LANGUAGES)} comma-separated values "
+            f"(one per language in dataset.LANGUAGES={LANGUAGES}), got {len(beta_by_language)}: "
+            f"{beta_by_language}"
+        )
     return TrainConfig(
         data_root=args.data_root,
         languages=tuple(args.languages.split(",")),
@@ -336,7 +351,7 @@ def parse_args():
         total_steps=args.total_steps,
         grad_clip_norm=args.grad_clip_norm,
         reg_weight=args.reg_weight,
-        beta_by_script=tuple(float(b) for b in args.beta_by_script.split(",")),
+        beta_by_language=beta_by_language,
         log_every=args.log_every,
         eval_every=args.eval_every,
         eval_batches=args.eval_batches,
