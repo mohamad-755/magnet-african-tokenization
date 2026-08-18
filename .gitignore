@@ -8,6 +8,7 @@ data/cleaned/*
 results/*
 !results/.gitkeep
 !results/bpe_baseline_stats.json
+!results/per_language_vs_script_level_comparison.json
 
 # Python artifacts
 __pycache__/

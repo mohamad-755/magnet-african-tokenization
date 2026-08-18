@@ -1,0 +1,77 @@
+{
+  "script_level_checkpoint": {
+    "checkpoint_dir": "checkpoints_all_9langs",
+    "step": 4999,
+    "beta_by_script": [
+      0.5,
+      0.5
+    ]
+  },
+  "per_language_checkpoint": {
+    "checkpoint_dir": "checkpoints_per_language",
+    "step": 4999,
+    "beta_by_language": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ]
+  },
+  "comparison": [
+    {
+      "language": "sw",
+      "per_language_bytes_seg": 2.53,
+      "script_level_bytes_seg": 2.34
+    },
+    {
+      "language": "zu",
+      "per_language_bytes_seg": 2.26,
+      "script_level_bytes_seg": 2.25
+    },
+    {
+      "language": "yo",
+      "per_language_bytes_seg": 1.93,
+      "script_level_bytes_seg": 2.03
+    },
+    {
+      "language": "ig",
+      "per_language_bytes_seg": 2.72,
+      "script_level_bytes_seg": 2.3
+    },
+    {
+      "language": "ha",
+      "per_language_bytes_seg": 2.46,
+      "script_level_bytes_seg": 2.55
+    },
+    {
+      "language": "ny",
+      "per_language_bytes_seg": 1.81,
+      "script_level_bytes_seg": 2.35
+    },
+    {
+      "language": "am",
+      "per_language_bytes_seg": 2.1,
+      "script_level_bytes_seg": 1.96
+    },
+    {
+      "language": "rw",
+      "per_language_bytes_seg": 1.67,
+      "script_level_bytes_seg": 2.17
+    },
+    {
+      "language": "wo",
+      "per_language_bytes_seg": 1.95,
+      "script_level_bytes_seg": 2.29
+    }
+  ],
+  "cv_per_language": 0.15545360476502615,
+  "cv_script_level": 0.0742718931499527,
+  "latin_only_note": "am is the sole Geez-script language, so it had a dedicated predictor under script-level routing too — identical setup to per-language routing for am specifically. cv_*_latin_only isolates the 8 Latin-script languages, which went from sharing one predictor (script-level) to each having their own (per-language), removing that confound.",
+  "cv_per_language_latin_only": 0.1640066379702012,
+  "cv_script_level_latin_only": 0.06134724625328746
+}
