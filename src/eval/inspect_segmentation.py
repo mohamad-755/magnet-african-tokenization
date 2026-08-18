@@ -17,6 +17,7 @@ Usage:
 """
 import argparse
 import os
+import sys
 
 import torch
 from torch.utils.data import DataLoader
@@ -88,23 +89,44 @@ def hard_boundaries_for(model, byte_ids, script_id, device):
 
 def render_segments(byte_ids, hard_boundaries):
     """
-    Splits a byte sequence into segments at each predicted hard boundary
-    and decodes each segment independently for "||"-separated display
-    (paper Table 4 style). Byte-level segmentation can split a multi-byte
-    UTF-8 character across two segments; such segments are decoded with
-    errors="replace" (shown as \\ufffd) rather than hidden, since whether
-    boundaries respect character boundaries is itself part of what this
-    script is inspecting.
+    Decodes the FULL byte sequence once — not each segment's raw bytes
+    independently, which breaks for any script using multi-byte UTF-8
+    characters (e.g. Geez, 3 bytes/char): a boundary falling mid-character
+    would split a valid encoding across two invalid fragments. Instead,
+    predicted byte-level boundaries are mapped onto the already-decoded
+    text and "||" is inserted after whichever character each boundary
+    byte falls within.
+
+    n_segments is the true byte-level segment count (sum of
+    hard_boundaries), matching [[full_eval_stats]]'s methodology exactly.
+    This can exceed the number of "||"-separated chunks shown: when a
+    boundary lands strictly inside a multi-byte character rather than
+    exactly on a character edge, that's counted in the returned
+    mid_char_splits — a genuinely interesting finding in its own right
+    (the model splitting a single character across two segments), not
+    swept under errors="replace" as before.
     """
-    segments, start = [], 0
-    for i, is_boundary in enumerate(hard_boundaries):
-        if is_boundary:
-            segments.append(bytes(byte_ids[start:i + 1]))
-            start = i + 1
-    if start < len(byte_ids):
-        segments.append(bytes(byte_ids[start:]))
-    decoded = [seg.decode("utf-8", errors="replace") for seg in segments]
-    return "||".join(decoded), len(segments)
+    text = bytes(byte_ids).decode("utf-8", errors="replace")
+    n_segments = int(sum(hard_boundaries))
+    boundary_bytes = {i for i, is_boundary in enumerate(hard_boundaries) if is_boundary}
+
+    char_byte_start = 0
+    parts, current = [], []
+    mid_char_splits = 0
+    for ch in text:
+        current.append(ch)
+        char_byte_end = char_byte_start + len(ch.encode("utf-8"))  # exclusive
+        boundary_in_char = any(b in boundary_bytes for b in range(char_byte_start, char_byte_end))
+        if boundary_in_char:
+            if (char_byte_end - 1) not in boundary_bytes:
+                mid_char_splits += 1
+            parts.append("".join(current))
+            current = []
+        char_byte_start = char_byte_end
+    if current:
+        parts.append("".join(current))
+
+    return "||".join(parts), n_segments, mid_char_splits
 
 
 def read_example_lines(eval_txt_path, n, max_bytes):
@@ -133,8 +155,9 @@ def print_examples(model, data_root, lang, script_id, device, max_seq_len, n):
     print(f"\n=== {lang}: {len(lines)} example sentence(s) ===")
     for byte_ids in lines:
         hard = hard_boundaries_for(model, byte_ids, script_id, device)
-        rendered, n_segments = render_segments(byte_ids, hard)
-        print(f"  [{n_segments} segments, {len(byte_ids)} bytes] {rendered}")
+        rendered, n_segments, mid_char_splits = render_segments(byte_ids, hard)
+        mid_char_note = f", {mid_char_splits} mid-character" if mid_char_splits else ""
+        print(f"  [{n_segments} segments{mid_char_note}, {len(byte_ids)} bytes] {rendered}")
 
 
 @torch.no_grad()
@@ -185,6 +208,13 @@ def parse_args():
 
 
 def main():
+    # This script's whole purpose is printing multi-script text (Latin,
+    # Geez, ...) — force UTF-8 stdout so it doesn't crash on Windows
+    # consoles that default to a codepage (e.g. cp1252) lacking those
+    # characters.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
     args = parse_args()
     if not args.data_root:
         raise SystemExit("Set --data-root or the MAGNET_DATA_ROOT environment variable.")
