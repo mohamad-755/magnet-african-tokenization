@@ -1,0 +1,118 @@
+{
+  "magnet_checkpoint": {
+    "checkpoint_dir": "checkpoints_all_9langs",
+    "step": 4999,
+    "beta_by_script": [
+      0.5,
+      0.5
+    ]
+  },
+  "bpe_vocab_size": 8000,
+  "languages": [
+    "am",
+    "ha",
+    "ig",
+    "ny",
+    "rw",
+    "sw",
+    "wo",
+    "yo",
+    "zu"
+  ],
+  "magnet": {
+    "am": {
+      "n_examples": 1933,
+      "avg_segments_per_example": 261.52,
+      "avg_bytes_per_segment": 1.96
+    },
+    "ha": {
+      "n_examples": 25518,
+      "avg_segments_per_example": 201.15,
+      "avg_bytes_per_segment": 2.55
+    },
+    "ig": {
+      "n_examples": 12258,
+      "avg_segments_per_example": 222.74,
+      "avg_bytes_per_segment": 2.3
+    },
+    "ny": {
+      "n_examples": 113,
+      "avg_segments_per_example": 217.13,
+      "avg_bytes_per_segment": 2.35
+    },
+    "rw": {
+      "n_examples": 1407,
+      "avg_segments_per_example": 235.37,
+      "avg_bytes_per_segment": 2.17
+    },
+    "sw": {
+      "n_examples": 6344,
+      "avg_segments_per_example": 218.85,
+      "avg_bytes_per_segment": 2.34
+    },
+    "wo": {
+      "n_examples": 307,
+      "avg_segments_per_example": 223.45,
+      "avg_bytes_per_segment": 2.29
+    },
+    "yo": {
+      "n_examples": 1930,
+      "avg_segments_per_example": 251.61,
+      "avg_bytes_per_segment": 2.03
+    },
+    "zu": {
+      "n_examples": 746,
+      "avg_segments_per_example": 227.55,
+      "avg_bytes_per_segment": 2.25
+    }
+  },
+  "magnet_coefficient_of_variation": 0.0742718931499527,
+  "bpe": {
+    "am": {
+      "avg_bytes_per_segment": 5.704994722057187,
+      "total_bytes": 989035,
+      "total_tokens": 173363
+    },
+    "ha": {
+      "avg_bytes_per_segment": 3.752040515545841,
+      "total_bytes": 13059870,
+      "total_tokens": 3480738
+    },
+    "ig": {
+      "avg_bytes_per_segment": 4.00506079723996,
+      "total_bytes": 6273343,
+      "total_tokens": 1566354
+    },
+    "ny": {
+      "avg_bytes_per_segment": 4.371235682318137,
+      "total_bytes": 57626,
+      "total_tokens": 13183
+    },
+    "rw": {
+      "avg_bytes_per_segment": 3.999994441757961,
+      "total_bytes": 719651,
+      "total_tokens": 179913
+    },
+    "sw": {
+      "avg_bytes_per_segment": 3.950931409208613,
+      "total_bytes": 3243770,
+      "total_tokens": 821014
+    },
+    "wo": {
+      "avg_bytes_per_segment": 3.6310157950808284,
+      "total_bytes": 156780,
+      "total_tokens": 43178
+    },
+    "yo": {
+      "avg_bytes_per_segment": 4.384648187633262,
+      "total_bytes": 987072,
+      "total_tokens": 225120
+    },
+    "zu": {
+      "avg_bytes_per_segment": 4.06068382439066,
+      "total_bytes": 381351,
+      "total_tokens": 93913
+    }
+  },
+  "bpe_coefficient_of_variation": 0.13751568794100894
+}

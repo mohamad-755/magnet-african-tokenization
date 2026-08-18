@@ -7,6 +7,7 @@ data/cleaned/*
 # Results (keep folder tracked via .gitkeep, ignore contents)
 results/*
 !results/.gitkeep
+!results/bpe_baseline_stats.json
 
 # Python artifacts
 __pycache__/
