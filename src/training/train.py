@@ -299,6 +299,11 @@ def parse_args():
     parser.add_argument("--total-steps", type=int, default=defaults.total_steps)
     parser.add_argument("--grad-clip-norm", type=float, default=defaults.grad_clip_norm)
     parser.add_argument("--reg-weight", type=float, default=defaults.reg_weight)
+    # Comma-separated floats, index-aligned with SCRIPTS = ("Latin", "Geez"),
+    # e.g. --beta-by-script 0.5,0.3. Without this flag every script shares
+    # the same TrainConfig default target rate — see src/eval/compute_beta.py
+    # for computing a script's target from its paper Eq. 4 byte-to-word ratio.
+    parser.add_argument("--beta-by-script", type=str, default=",".join(str(b) for b in defaults.beta_by_script))
 
     parser.add_argument("--log-every", type=int, default=defaults.log_every)
     parser.add_argument("--eval-every", type=int, default=defaults.eval_every)
@@ -331,6 +336,7 @@ def parse_args():
         total_steps=args.total_steps,
         grad_clip_norm=args.grad_clip_norm,
         reg_weight=args.reg_weight,
+        beta_by_script=tuple(float(b) for b in args.beta_by_script.split(",")),
         log_every=args.log_every,
         eval_every=args.eval_every,
         eval_batches=args.eval_batches,
