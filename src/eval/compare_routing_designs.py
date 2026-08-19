@@ -10,9 +10,13 @@ Neither set of numbers is re-derived here — both are taken directly from
 real eval_holdout inspection runs (inspect_segmentation.py):
 - script_level: checkpoints_all_9langs/step_4999.pt, uniform
   beta_by_script=(0.5, 0.5) — same source as src/eval/bpe_baseline.py's
-  MAGNET_STATS.
+  MAGNET_STATS. Predates train.py's --seed fix, so this specific run isn't
+  reproducible from current code (and can't be, since its architecture,
+  ScriptRoutedBoundaryPredictor, was since removed) — kept as a historical
+  reference point only.
 - per_language: checkpoints_per_language/step_4999.pt, uniform
-  beta_by_language=(0.5,)*9 — from a real Colab run, pasted directly.
+  beta_by_language=(0.5,)*9, seed=42 (train.py's default) — from a real,
+  reproducible Colab run, pasted directly.
 
 Read-only: loads no checkpoint, runs no model.
 
@@ -37,6 +41,7 @@ PER_LANGUAGE_CHECKPOINT_INFO = {
     "checkpoint_dir": "checkpoints_per_language",
     "step": 4999,
     "beta_by_language": [0.5] * 9,
+    "seed": 42,
 }
 
 # avg_bytes_per_segment from full eval_holdout inspect_segmentation.py runs
@@ -45,8 +50,8 @@ SCRIPT_LEVEL_BYTES_PER_SEGMENT = {
     "ny": 2.35, "am": 1.96, "rw": 2.17, "wo": 2.29,
 }
 PER_LANGUAGE_BYTES_PER_SEGMENT = {
-    "sw": 2.53, "zu": 2.26, "yo": 1.93, "ig": 2.72, "ha": 2.46,
-    "ny": 1.81, "am": 2.10, "rw": 1.67, "wo": 1.95,
+    "sw": 1.69, "zu": 2.21, "yo": 2.16, "ig": 2.31, "ha": 2.22,
+    "ny": 2.30, "am": 2.17, "rw": 1.83, "wo": 1.81,
 }
 
 

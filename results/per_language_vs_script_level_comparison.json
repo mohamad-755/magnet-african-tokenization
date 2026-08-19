@@ -20,58 +20,59 @@
       0.5,
       0.5,
       0.5
-    ]
+    ],
+    "seed": 42
   },
   "comparison": [
     {
       "language": "sw",
-      "per_language_bytes_seg": 2.53,
+      "per_language_bytes_seg": 1.69,
       "script_level_bytes_seg": 2.34
     },
     {
       "language": "zu",
-      "per_language_bytes_seg": 2.26,
+      "per_language_bytes_seg": 2.21,
       "script_level_bytes_seg": 2.25
     },
     {
       "language": "yo",
-      "per_language_bytes_seg": 1.93,
+      "per_language_bytes_seg": 2.16,
       "script_level_bytes_seg": 2.03
     },
     {
       "language": "ig",
-      "per_language_bytes_seg": 2.72,
+      "per_language_bytes_seg": 2.31,
       "script_level_bytes_seg": 2.3
     },
     {
       "language": "ha",
-      "per_language_bytes_seg": 2.46,
+      "per_language_bytes_seg": 2.22,
       "script_level_bytes_seg": 2.55
     },
     {
       "language": "ny",
-      "per_language_bytes_seg": 1.81,
+      "per_language_bytes_seg": 2.3,
       "script_level_bytes_seg": 2.35
     },
     {
       "language": "am",
-      "per_language_bytes_seg": 2.1,
+      "per_language_bytes_seg": 2.17,
       "script_level_bytes_seg": 1.96
     },
     {
       "language": "rw",
-      "per_language_bytes_seg": 1.67,
+      "per_language_bytes_seg": 1.83,
       "script_level_bytes_seg": 2.17
     },
     {
       "language": "wo",
-      "per_language_bytes_seg": 1.95,
+      "per_language_bytes_seg": 1.81,
       "script_level_bytes_seg": 2.29
     }
   ],
-  "cv_per_language": 0.15545360476502615,
+  "cv_per_language": 0.10638620463207442,
   "cv_script_level": 0.0742718931499527,
   "latin_only_note": "am is the sole Geez-script language, so it had a dedicated predictor under script-level routing too — identical setup to per-language routing for am specifically. cv_*_latin_only isolates the 8 Latin-script languages, which went from sharing one predictor (script-level) to each having their own (per-language), removing that confound.",
-  "cv_per_language_latin_only": 0.1640066379702012,
+  "cv_per_language_latin_only": 0.11222795087277154,
   "cv_script_level_latin_only": 0.06134724625328746
 }

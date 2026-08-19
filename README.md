@@ -36,11 +36,12 @@ completed comparisons and one documented negative result:
   uniform target compression rate, β=0.5): giving each language its own
   predictor instead of sharing one per script did not improve
   cross-language fairness — coefficient of variation in bytes/segment was
-  roughly double under per-language routing, and isolated to just the 8
-  Latin-script languages (removing Amharic's confound, since it already had
-  a dedicated predictor either way) the gap is closer to 3x worse. Sharing
-  weights across languages appears to act as an implicit consistency
-  mechanism that independent per-language predictors don't get for free.
+  about 1.4x higher under per-language routing (0.106 vs. 0.074), and
+  isolated to just the 8 Latin-script languages (removing Amharic's
+  confound, since it already had a dedicated predictor either way) about
+  1.8x higher (0.112 vs. 0.061). Sharing weights across languages appears
+  to act as an implicit consistency mechanism that independent
+  per-language predictors don't get for free.
   See `results/per_language_vs_script_level_comparison.json`.
 - **MAGNET vs. a BPE baseline**: comparing bytes/segment and its
   coefficient of variation across languages, see
