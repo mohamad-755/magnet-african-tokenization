@@ -72,9 +72,11 @@ completed comparisons and one documented negative result:
 
 ## Repo structure
 
-- `data/raw/` — raw, unprocessed corpus data per language (gitignored)
-- `data/cleaned/` — cleaned/preprocessed corpus data ready for tokenizer
-  training (gitignored)
+- `data/raw/` — local copies of corpus files that were unreliable to read
+  directly from DATA_ROOT (currently just Hausa's 252MB corpus.txt, which
+  hit Google Drive read failures — see data_card.md/git history); not a
+  general local mirror. Training/eval otherwise read directly from the
+  external DATA_ROOT via `--data-root`/`MAGNET_DATA_ROOT` (gitignored)
 - `src/model/` — MAGNET model architecture code (`magnet.py`,
   `hourglass_transformer.py`, `boundary_predictor.py`, `losses.py`)
 - `src/training/` — data pipeline and training loop (`dataset.py`,

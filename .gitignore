@@ -1,8 +1,6 @@
-# Data (keep folders tracked via .gitkeep, ignore contents)
+# Data (keep folder tracked via .gitkeep, ignore contents)
 data/raw/*
 !data/raw/.gitkeep
-data/cleaned/*
-!data/cleaned/.gitkeep
 
 # Results (keep folder tracked via .gitkeep, ignore contents)
 results/*
