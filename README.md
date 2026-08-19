@@ -28,20 +28,66 @@ known limitations.
 
 ## Project status
 
-Corpus cleaning complete for all 9 languages (see data_card.md). MAGNET
-architecture reproduction in progress.
+Corpus cleaning complete for all 9 languages (see data_card.md). MAGNET is
+reproduced (`src/model/`) and trained (`src/training/train.py`), with three
+completed comparisons and one documented negative result:
+
+- **Script-level vs. per-language boundary-predictor routing** (both at a
+  uniform target compression rate, β=0.5): giving each language its own
+  predictor instead of sharing one per script did not improve
+  cross-language fairness — coefficient of variation in bytes/segment was
+  roughly double under per-language routing, and isolated to just the 8
+  Latin-script languages (removing Amharic's confound, since it already had
+  a dedicated predictor either way) the gap is closer to 3x worse. Sharing
+  weights across languages appears to act as an implicit consistency
+  mechanism that independent per-language predictors don't get for free.
+  See `results/per_language_vs_script_level_comparison.json`.
+- **MAGNET vs. a BPE baseline**: comparing bytes/segment and its
+  coefficient of variation across languages, see
+  `results/bpe_baseline_stats.json`. MAGNET's raw byte-level boundaries can
+  split individual multi-byte characters (severely for Amharic/Ge'ez, ~30%+
+  of segments in some samples); BPE cannot, by construction.
+- **Per-language β targets (paper Eq. 4) — training collapse, unresolved.**
+  Computing each language's own target compression rate from its
+  byte-to-word ratio and training with those 9 distinct values (rather than
+  one shared β=0.5) caused the boundary predictor to collapse to
+  effectively zero real boundaries, uniformly across all 9 languages
+  regardless of how different their individual targets were — evidence of
+  a shared optimization failure (likely the regularizer dominating the LM
+  loss early and saturating the boundary predictor toward the trivial
+  solution), not of genuine per-language convergence. Reducing
+  `reg_weight` 10x (1.0 → 0.1) did not resolve it. Not solved within this
+  project's time budget — the interaction between per-language β spread
+  and regularizer weighting needs further study.
+
+## Limitations / known open issues
+
+- The per-language β training collapse above is unresolved; `--beta-by-language`
+  values far from 0.5 are not currently safe to train with at
+  `reg_weight >= 0.1` without further investigation.
+- The "we tried β=(0.157, 0.081) under script-level routing and it doesn't
+  work" claim (referenced during development) was never independently
+  reproduced with visible output in this project's own history — worth
+  re-verifying if it becomes relevant again.
 
 ## Repo structure
 
 - `data/raw/` — raw, unprocessed corpus data per language (gitignored)
 - `data/cleaned/` — cleaned/preprocessed corpus data ready for tokenizer
   training (gitignored)
-- `src/model/` — MAGNET model architecture code
-- `src/training/` — training loops and tokenizer fitting scripts
-- `src/eval/` — tokenization fairness evaluation and metrics
+- `src/model/` — MAGNET model architecture code (`magnet.py`,
+  `hourglass_transformer.py`, `boundary_predictor.py`, `losses.py`)
+- `src/training/` — data pipeline and training loop (`dataset.py`,
+  `collate.py`, `train.py`)
+- `src/eval/` — evaluation and analysis scripts: `inspect_segmentation.py`
+  (checkpoint segmentation inspection), `compute_beta.py` (paper Eq. 4
+  target compression rate), `bpe_baseline.py` (BPE comparison),
+  `compare_routing_designs.py` (script-level vs. per-language comparison)
 - `configs/` — language metadata and experiment configuration files
 - `notebooks/` — exploratory analysis and visualization notebooks
-- `results/` — experiment outputs, metrics, and figures (gitignored)
+- `results/` — experiment outputs (gitignored except the two comparison
+  JSONs explicitly tracked: `bpe_baseline_stats.json`,
+  `per_language_vs_script_level_comparison.json`)
 - `data_card.md` — corpus documentation, cleaning methodology, and known
   limitations
 
