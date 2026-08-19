@@ -72,11 +72,10 @@ completed comparisons and one documented negative result:
 
 ## Repo structure
 
-- `data/raw/` — local copies of corpus files that were unreliable to read
-  directly from DATA_ROOT (currently just Hausa's 252MB corpus.txt, which
-  hit Google Drive read failures — see data_card.md/git history); not a
-  general local mirror. Training/eval otherwise read directly from the
-  external DATA_ROOT via `--data-root`/`MAGNET_DATA_ROOT` (gitignored)
+- `data/` — see `data/README.md`. Training/eval read directly from the
+  external DATA_ROOT via `--data-root`/`MAGNET_DATA_ROOT`; `data/raw/` is a
+  gitignored fallback spot for local copies of any corpus file that turns
+  out unreliable to read straight from Drive (not a general mirror)
 - `src/model/` — MAGNET model architecture code (`magnet.py`,
   `hourglass_transformer.py`, `boundary_predictor.py`, `losses.py`)
 - `src/training/` — data pipeline and training loop (`dataset.py`,
