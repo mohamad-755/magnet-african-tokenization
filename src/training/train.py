@@ -82,6 +82,15 @@ class TrainConfig:
     resume_from: str = None
 
     device: str = None  # resolved at runtime if None
+    # No seed was set in earlier runs, so results/*.json numbers from before
+    # this field existed reflect one particular random run, not a
+    # reproducible reference point — re-running with the same config
+    # produced different numbers each time (different weight init, different
+    # Gumbel-sigmoid noise draws). Fixing a seed makes new runs consistent
+    # with each other, though not necessarily bit-exact on GPU: MAGNET's
+    # segment pooling uses scatter_add_, which CUDA does not guarantee
+    # deterministic floating-point summation order for.
+    seed: int = 42
 
 
 def resolve_device(requested=None):
@@ -226,8 +235,11 @@ def load_checkpoint(path, model, optimizer, scheduler, device):
 
 
 def train(config):
+    torch.manual_seed(config.seed)
+    torch.cuda.manual_seed_all(config.seed)
+
     device = resolve_device(config.device)
-    print(f"device: {device}")
+    print(f"device: {device}, seed: {config.seed}")
     print(f"languages: {list(config.languages)}")
 
     model = build_model(config).to(device)
@@ -327,6 +339,7 @@ def parse_args():
     # docstring and build_scheduler).
     parser.add_argument("--resume", type=str, default=defaults.resume_from)
     parser.add_argument("--device", type=str, default=defaults.device)
+    parser.add_argument("--seed", type=int, default=defaults.seed)
 
     args = parser.parse_args()
     beta_by_language = tuple(float(b) for b in args.beta_by_language.split(","))
@@ -359,6 +372,7 @@ def parse_args():
         checkpoint_dir=args.checkpoint_dir,
         resume_from=args.resume,
         device=args.device,
+        seed=args.seed,
     )
 
 
