@@ -73,8 +73,9 @@ completed comparisons and one documented negative result:
 
 ## Repo structure
 
-- `data/` — see `data/README.md`. Training/eval read directly from the
-  external DATA_ROOT via `--data-root`/`MAGNET_DATA_ROOT`; `data/raw/` is a
+- `data/` — see `data/README.md` for the external DATA_ROOT link
+  (corpora + all experiment checkpoints) and structure. Training/eval read
+  directly from it via `--data-root`/`MAGNET_DATA_ROOT`; `data/raw/` is a
   gitignored fallback spot for local copies of any corpus file that turns
   out unreliable to read straight from Drive (not a general mirror)
 - `src/model/` — MAGNET model architecture code (`magnet.py`,

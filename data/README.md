@@ -5,6 +5,12 @@ Google Drive folder (`DATA_ROOT`), not here — point the pipeline at it via
 `--data-root` or the `MAGNET_DATA_ROOT` env var. See `data_card.md` for full
 corpus documentation.
 
+`DATA_ROOT` (shared, view access): https://drive.google.com/drive/folders/1jN8eXuBZ5IxXoGHM-zPz9im6IajAd8ca
+— also holds every experiment's checkpoints (`checkpoints_*/`), including
+the ones this project's results are drawn from
+(`checkpoints_all_9langs/`, `checkpoints_per_language/`,
+`checkpoints_per_language_tuned_beta/`, `checkpoints_per_language_tuned_beta_lowreg/`).
+
 Expected `DATA_ROOT` structure (only the parts the pipeline actually reads):
 
 ```
