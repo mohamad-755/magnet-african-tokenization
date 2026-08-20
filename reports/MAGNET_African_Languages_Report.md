@@ -42,7 +42,13 @@ The β collapse remains unresolved. We ruled out regularizer weight as the sole 
 
 ## 6. Reflection on Learnings
 
-*[To fill in: this section is meant to be a personal reflection on what was rewarding and challenging about the project, and how challenges were overcome — that's yours to write, not something I should draft on your behalf.]*
+The hardest part of this project wasn't the model architecture — it was learning to distrust my own numbers. I caught myself computing the paper's target compression rate wrong, averaging bytes and words across the whole corpus instead of per document, the way Eq. 4 actually specifies. It took a second pass to notice the two methods gave meaningfully different results, not just rounding noise. Later, I had a full results write-up drafted early, and when I checked it line by line against what I'd actually run, a large chunk of it turned out to be invented — experiments that never happened, a language's script labeled wrong, numbers that contradicted each other in the same document. Rebuilding it from only verified numbers taught me more about doing careful research than any of the model debugging did.
+
+The most rewarding moment was the opposite kind of surprise. When I gave each language its own target compression rate instead of sharing one across all of them, the model didn't get better at treating languages differently — it just stopped segmenting entirely, for every language, regardless of how different their targets were supposed to be. Cutting the regularizer's weight by 10x didn't fix it. I don't have a clean answer for why yet, and I had to be okay submitting that as an open question instead of a solved one.
+
+The most tedious part had nothing to do with machine learning at all: one language's raw text file kept failing to read from Google Drive, for reasons that took real effort to even diagnose, let alone fix. Good reminder that a lot of real research time doesn't go into the interesting part.
+
+If I did this again, I'd budget more time for hyperparameter exploration on the collapse before accepting it as unsolved, and I'd fact-check any generated writeup against my own logs from the first draft, not after the fact.
 
 ---
 
